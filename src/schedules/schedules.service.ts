@@ -1,15 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { format } from 'date-fns';
 import { ScheduleCreateDTO } from './dto/scheduleCreate.dto';
 import { ScheduleUpdateDTO } from './dto/scheduleUpdate.dto';
 import { ScheduleType } from './interface/ScheduleType';
 import { Schedule } from './schema/schedule.schema';
-
-const d = new Date();
-const today = `${d.getFullYear()}-${(d.getMonth() + 1)
-  .toString()
-  .padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
 
 @Injectable()
 export class SchedulesService {
@@ -20,7 +16,7 @@ export class SchedulesService {
   public async getSchedules(type: ScheduleType) {
     if (type === ScheduleType.TODAY) {
       return await this.scheduleModel
-        .find({ dueAt: today })
+        .find({ dueAt: format(new Date(), 'yyyy-MM-dd') })
         .sort('dueAt')
         .exec();
     }
@@ -78,7 +74,9 @@ export class SchedulesService {
 
   public async toggleSchedule(_id: string): Promise<Schedule> {
     const schedule = await this.scheduleModel.findById(_id);
-    schedule.completedAt = schedule.completedAt ? null : today;
+    schedule.completedAt = schedule.completedAt
+      ? null
+      : format(new Date(), 'yyyy-MM-dd');
 
     await schedule.save();
     return schedule;
